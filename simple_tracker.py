@@ -25,8 +25,59 @@ class AmazonAPI:
         print("Starting script")
         print(f"looking for {self.search_item} products...")
         links = self.get_product_links()
-        print(links)
+        if not links:
+            print("Stopped script")
+            return
+        print(f"Got {len(links)} links to the products")
+        print("Getting info about products")
+        products = self.get_product_info(links)
         return None
+        
+    def get_product_info(self, links):
+        asins = self.get_asins(links)
+        products = []
+        for asin in asins:
+            product = self.get_single_product_info(asin)
+            if product:
+                products.append(product)
+        return products
+    def get_asins(self, links):
+        return [self.get_asin(link) for link in links]
+    
+    @staticmethod
+    def get_asin(product_link):
+        return product_link[product_link.find('/dp/') + 4:product_link.find('/ref')]
+    
+    def get_single_product_info(self, asin):
+        print(f"Product ID: {asin} - getting data")
+        product_short_url = self.get_shorten_url(asin)
+        self.driver.get(f"{product_short_url}?language=en_GB")
+        title = self.get_title()
+        seller = self.get_seller()
+        price = self.get_price()
+        
+        if title and seller and price:
+            product_info = {
+                'asin':asin,
+                'url':product_short_url,
+                'title':title,
+                'seller':seller,
+                'price':price
+             }
+            return product_info
+        return None
+    
+    def get_title(self):
+        pass
+    
+    def get_seller(self):
+        pass
+    
+    def get_price(self):
+        pass
+        
+    def get_shorten_url(self, asin):
+        return self.base_url + 'dp/' + asin
         
     def get_product_links(self):
         self.driver.get(self.base_url)
@@ -36,12 +87,14 @@ class AmazonAPI:
         time.sleep(2)
         self.driver.get(f"{self.driver.current_url}{self.price_filter}")
         print(f"our url is {self.driver.current_url}")
-        time.sleep(2)
-        result_list = self.driver.find_elements(By.CLASS_NAME, 's-result-list')
+        result_list = self.driver.find_elements(By.CLASS_NAME, 's-result-item')
         links = []
         try:
-            results = result_list[0].find_elements("xpath", "//div/span/div/div/div[2]/div[2]/div/div[1]/div/div/div[1]/h2/a")
-            links =  [link.get_attribute('href') for link in results]
+            i = 0 
+            while i < len(result_list):
+                results = result_list[i].find_elements("xpath", "//div/div/div/div/div/div[2]/div/div/div[1]/h2/a")
+                links =  [link.get_attribute('href') for link in results]
+                i = i + 1
             return links
         except Exception as e:
             print("Did not get any product")
