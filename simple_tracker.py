@@ -3,6 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from datetime import datetime
 from amazon_config import get_chrome_web_driver, get_web_driver_options, set_automation_as_head_less, set_browser_as_incognito, set_ignore_certificate_error, DIRECTORY, NAME, CURRENCY, FILTERS, BASE_URL
+from selenium.webdriver.common.by import By
 
 
 class GenerateReport:
@@ -36,7 +37,7 @@ class AmazonAPI:
         self.driver.get(f"{self.driver.current_url}{self.price_filter}")
         print(f"our url is {self.driver.current_url}")
         time.sleep(2)
-        result_list = self.driver.find_elements("class_name", 's-result-list')
+        result_list = self.driver.find_elements(By.CLASS_NAME, 's-result-list')
         links = []
         try:
             results = result_list[0].find_elements("xpath", "//div/span/div/div/div[2]/div[2]/div/div[1]/div/div/div[1]/h2/a")
